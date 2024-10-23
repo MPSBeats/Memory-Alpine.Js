@@ -5,127 +5,40 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Jeu de Mémoire</title>
     <script src="https://unpkg.com/alpinejs" defer></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
-        .smallGrid {
-            margin-top: 50px;
-            display: grid;
-            grid-template-columns: repeat(4, 100px);
-            gap: 10px;
-        }
-        .largeGrid {
-            margin-top: 50px;
-            display: grid;
-            grid-template-columns: repeat(8, 100px);
-            gap: 10px;
-        }
-        .carte {
-            width: 100px;
-            height: 100px;
-            background-color: #ccc;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            font-size: 2rem;
-        }
-        .matched {
-            background-color: #28a745;
-            color: white;
-            cursor: not-allowed;
-        }
-        .hidden {
-            display: none;
-        }
-        .button {
-            margin: auto;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js"></script>
 </head>
 <body>
-    <div x-data="{ small: true, large: false }">
-        <button @click="small = true, large = false" class="button">Petit Memory</button>
-        <button @click="large = true, small = false" class="button">Grand Memory </button>
+    <div x-data="{ small: true, large: false, init() { this.memoryInstance = memory(false); } }" x-init="init()">
+        <div class="container">
+            <button @click="small = true; large = false; init(); memoryInstance.resetGame(false);" class="button">Petit Memory</button>
+            <button @click="large = true; small = false; init(); memoryInstance.resetGame(true);" class="button">Grand Memory</button>
+        </div>
+        
         <div x-show="small">
-            <div x-data="memory(false)" class="smallGrid">
-                <template x-for="(carte, index) in cartes" :key="index">
-                    <div :class="['carte', carte.matched ? 'matched' : '']" @click="tournecarte(index)"
+            <div x-data="memory(false)" class="smallGrid" x-ref="smallGrid">
+                <template x-for="(carte, index) in memoryInstance.cartes" :key="index">
+                    <div :class="['carte', carte.matched ? 'matched' : '']" @click="memoryInstance.tournecarte(index)"
                         x-text="carte.tournee || carte.matched ? carte.value : ''">
                     </div>
                 </template>
             </div>
         </div>
         <div x-show="large">
-            <div x-data="memory(true)" class="largeGrid">
-                <template x-for="(carte, index) in cartes" :key="index">
-                    <div :class="['carte', carte.matched ? 'matched' : '']" @click="tournecarte(index)"
+            <div x-data="memory(true)" class="largeGrid" x-ref="largeGrid">
+                <template x-for="(carte, index) in memoryInstance.cartes" :key="index">
+                    <div :class="['carte', carte.matched ? 'matched' : '']" @click="memoryInstance.tournecarte(index)"
                         x-text="carte.tournee || carte.matched ? carte.value : ''">
                     </div>
                 </template>
             </div>
         </div>
     </div>
-    <div style="margin: 50px; font-size: 2em;">
+    <div style="margin: 30px; font-size: 2em;">
         Nombre d'essais : <span id="nombreEssais">0</span>
     </div>
-    <button id="recommencer" class="hidden" onclick="location.reload()" style="font-size: 1.5em;">
+    <button class="button hidden" id="recommencer" onclick="location.reload()">
         Recommencer
     </button>
-    <script>
-        function memory(isLarge) {
-            let icons = ['🍎', '🍊', '🍉', '🍌', '🍇', '🍓', '🍒', '🍍'];
-            let iconsLarge=['🌶️','🍄','🥑','🥕','🥔','🥒','🌽','🥦']
-            if (isLarge) {
-                icons = icons.concat(iconsLarge);
-            }
-            icons = [...icons, ...icons];
-            icons.sort(() => Math.random() - 0.5);
-
-            return {
-                cartes: icons.map(icon => ({ value: icon, tournee: false, matched: false })),
-                tourneecartes: [],
-                affiche: document.getElementById("nombreEssais"),
-                essai: 0,
-                tournecarte(index) {
-                    let carte = this.cartes[index];
-                    if (carte.tournee || carte.matched || this.tourneecartes.length === 2) {
-                        return;
-                    }
-                    carte.tournee = true;
-                    this.tourneecartes.push(index);
-                    if (this.tourneecartes.length === 2) {
-                        this.essai++;
-                        this.affiche.innerHTML = this.essai;
-                        let [firstIdx, secondIdx] = this.tourneecartes;
-                        if (this.cartes[firstIdx].value === this.cartes[secondIdx].value) {
-                            this.cartes[firstIdx].matched = true;
-                            this.cartes[secondIdx].matched = true;
-                        } else {
-                            setTimeout(() => {
-                                this.cartes[firstIdx].tournee = false;
-                                this.cartes[secondIdx].tournee = false;
-                            }, 1000);
-                        }
-                        this.tourneecartes = [];
-                    }
-                    if (this.cartes.every(carte => carte.matched)) {
-                        setTimeout(() => {
-                            alert('Bravo, vous avez gagné!');
-                            document.getElementById("recommencer").classList.remove('hidden');
-                        }, 500);
-                    }
-                }
-            };
-        }
-    </script>
 </body>
 </html>
